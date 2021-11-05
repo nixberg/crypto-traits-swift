@@ -38,9 +38,49 @@ public extension DuplexProtocol {
 
 public protocol Duplex: DuplexProtocol {
     init()
+    
+    static func hash<Bytes, Output>(
+        contentsOf bytes: Bytes,
+        to output: inout Output,
+        outputByteCount: Int
+    ) where
+        Bytes: Sequence,
+        Bytes.Element == UInt8,
+        Output: RangeReplaceableCollection,
+        Output.Element == UInt8
+    
+    static func hash<Bytes, Output>(
+        contentsOf bytes: Bytes,
+        to output: inout Output
+    ) where
+        Bytes: Sequence,
+        Bytes.Element == UInt8,
+        Output: RangeReplaceableCollection,
+        Output.Element == UInt8
+    
+    static func hash<Bytes>(contentsOf bytes: Bytes, outputByteCount: Int) -> Output
+    where Bytes: Sequence, Bytes.Element == UInt8
+    
+    static func hash<Bytes>(contentsOf bytes: Bytes) -> Output
+    where Bytes: Sequence, Bytes.Element == UInt8
 }
 
 public extension Duplex {
+    static func hash<Bytes, Output>(
+        contentsOf bytes: Bytes,
+        to output: inout Output,
+        outputByteCount: Int
+    ) where
+        Bytes: Sequence,
+        Bytes.Element == UInt8,
+        Output: RangeReplaceableCollection,
+        Output.Element == UInt8
+    {
+        var duplex: Self = .init()
+        duplex.absorb(contentsOf: bytes)
+        duplex.squeeze(to: &output, outputByteCount: outputByteCount)
+    }
+    
     static func hash<Bytes, Output>(contentsOf bytes: Bytes, to output: inout Output)
     where
         Bytes: Sequence,
@@ -50,13 +90,20 @@ public extension Duplex {
     {
         var duplex: Self = .init()
         duplex.absorb(contentsOf: bytes)
-        duplex.squeeze(to: &output)
+        duplex.squeeze(to: &output, outputByteCount: Self.defaultOutputByteCount)
+    }
+    
+    static func hash<Bytes>(contentsOf bytes: Bytes, outputByteCount: Int) -> Output
+    where Bytes: Sequence, Bytes.Element == UInt8 {
+        var duplex: Self = .init()
+        duplex.absorb(contentsOf: bytes)
+        return duplex.squeeze(outputByteCount: outputByteCount)
     }
     
     static func hash<Bytes>(contentsOf bytes: Bytes) -> Output
     where Bytes: Sequence, Bytes.Element == UInt8 {
         var duplex: Self = .init()
         duplex.absorb(contentsOf: bytes)
-        return duplex.squeeze()
+        return duplex.squeeze(outputByteCount: Self.defaultOutputByteCount)
     }
 }
